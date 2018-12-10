@@ -1,2 +1,5 @@
 backup/*
 .tmp.tex
+theBook/*.pdf
+theBook/*.tex
+theBook/logfile
