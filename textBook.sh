@@ -465,7 +465,7 @@ function editEntry(){
 
 # $1 v for verbose
 function makeIT(){
-    cat "$theBookDir/header" >| "$theBookDir/product.tex"
+    cat "$theBookDir/header" | sed "s/insertNAMEhere/$(cat "$RESOURCES/name")/g" >| "$theBookDir/product.tex"
     data="$(cat "$RESOURCES/tableau"|awk '{$1=""; for(i=2;i<=NF;i++)printf("%s\n",$i);}'|cut -d= -f1|sort|uniq)"
     IFS=$'\r\n' classes=($(echo "$data"))
     for (( i1 = 0 ; i1 < ${#classes[@]} ; i1 ++)) ; do

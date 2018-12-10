@@ -22,7 +22,7 @@
 \fancyfoot{}
 \fancyhead[R]{دفتر النصوص}
 \fancyhead[L]{السنة الدراسية : 2018-2019}
-\fancyhead[C]{الأستاذ : رضوان مساعد}
+\fancyhead[C]{الأستاذ : insertNAMEhere}
 \fancyfoot[C]{\thepage}
 \renewcommand{\headrulewidth}{0pt}
 \renewcommand{\footrulewidth}{0pt}
@@ -43,7 +43,7 @@
     {\uppercase{\fontsize{70}{50}\selectfont دفتر النصوص \par}}
     \vspace{3cm}
 
-    {\fontsize{30}{30}\selectfont الأستاذ : رضوان مساعد\par}
+    {\fontsize{30}{30}\selectfont الأستاذ : insertNAMEhere\par}
     \vspace{3cm}
 
     {\Large السنة الدراسية : 2018-2019 \par}
