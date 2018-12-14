@@ -21,7 +21,11 @@ for (( i1 = 0 ; i1 < ${#classes[@]} ; i1++ )) ; do
       touch "$theBookDir/${classes[$i1]}.tex"
     fi
 done
+#==============================
 str=""
+yearStart='2018-09-04'
+#==============================
+
 # $1 class
 # $2 period
 # $3 period num
@@ -433,7 +437,7 @@ function checkIfAllsaved(){
   local today=`date '+%Y-%m-%d'`
   local lastSavedDay=$(cat "$LOGFILE"|grep -w saved |tail -1|cut -d: -f1)
   if [ -z "$lastSavedDay" ] 
-      then lastSavedDay='2018-09-04'
+      then lastSavedDay="$yearStart"
       else lastSavedDay=$(echo "$lastSavedDay"|awk -F- '{printf("%s-%s-%s",$3,$2,$1)}')
   fi
   nn="`date -d $today +%s` - `date -d $lastSavedDay +%s`"
