@@ -9,6 +9,7 @@ tmpfile="$workingDir/.tmp.tex"
 theBookDir="$workingDir/theBook"
 RESOURCES="$workingDir/resources"
 LOGFILE="$theBookDir/logfile"
+removeLatex="$workingDir/removeLatex.sh"
 #======================================
 if ! [ -f "$LOGFILE" ] ; then
     touch "$LOGFILE"
@@ -23,7 +24,8 @@ for (( i1 = 0 ; i1 < ${#classes[@]} ; i1++ )) ; do
 done
 #==============================
 str=""
-yearStart='2018-09-04'
+#yearStart='2018-09-10'
+yearStart='2018-12-14'
 #==============================
 
 # $1 class
@@ -87,6 +89,7 @@ function headerB(){
 
 
 # $1 period number 
+# $2 y for auto saving 
 function SaveTheFile(){
       local periodNum=$1
       local today=`date --date "-$MINUSDAYS days" +'%d-%m-%Y'`
@@ -102,7 +105,12 @@ function SaveTheFile(){
       echo "%%:$entryDATE:$periodNum:end" >> "$theBookDir/$class.tex"
       local lnumber=$( awk -v v="$var:unsaved" 'match($0,v){print NR}' "$LOGFILE" )
       if [[  "$lnumber" != "" ]] ; then
-        sed   --in-place -e "${lnumber} s/.*/$var:saved/" "$LOGFILE"
+        if [[ "$2" == y ]]
+            then
+                sed   --in-place -e "${lnumber} s/.*/$var:saved:auto/" "$LOGFILE"
+            else
+                sed   --in-place -e "${lnumber} s/.*/$var:saved/" "$LOGFILE"
+        fi
       fi
 }
 
@@ -119,7 +127,8 @@ function editing(){
     while true ; do
         tput reset
         if [[ "$2" != "y" ]] 
-            then  echo "$str" 
+            then
+                 "$removeLatex" "$str" 
                   echo
             else
                   echo
@@ -127,13 +136,13 @@ function editing(){
         fi
         if [[ "$2" != "y" ]] 
             then
-                menu="(a)arabic text (e)equation/latin text (f)insert pdf (s) save & exit (x) quit w/o saving "
+                menu="(a)arabic text (e)equation/latin text (f)insert pdf \n  (s)save & exit (x)quit w/o saving "
                 printf "\033[1;33m"
-                echo "========================================================================="
-                printf "\033[0m\n"
+                echo "=============================================================="
+                printf "\033[0m"
                 showMenu "$menu" 
                 printf "\033[1;33m"
-                echo "========================================================================="
+                echo "=============================================================="
                 echo
                 IFS= read -rN 1 -p " : " choice
                 printf "\033[0m\n"
@@ -151,7 +160,11 @@ function editing(){
                     file1="$(find "$HOME" -type f -iname "*.pdf" 2>/dev/null |fzf)"
                     cp "$file1" "$theBookDir/pdf-`date --date "-$MINUSDAYS days" +'%d-%m-%Y'`.pdf"
                     str="$str"$'\n'"\\includepdf[pages={1}]{pdf-`date --date "-$MINUSDAYS days" +'%d-%m-%Y'`.pdf}" ;;
-              s)    SaveTheFile "$periodNum"  ; exit ;;
+              s)    SaveTheFile "$periodNum" "$2" 
+                    if [[ "$2" != "y" ]] ;
+                        then exit 
+                        else return
+                    fi ;;
               x)    exit ;;
         esac
     done
@@ -185,7 +198,14 @@ function allsaved0(){
             local class=$(echo "$periods_of_today" | awk -v var="$periodNum" '{print $var}')
             if [[ "$1" == "status" ]] ; then
                   printf "\033[1;31m"
-                  echo "${class%=*} at `echo ${class#*=} |sed 's/-/ - /'` unsaved"
+                  string=" $(cat "$RESOURCES/periodA" ) "
+                  string+=" ${class%=*} "
+                  string+=" "
+                  tmp="${class#*=}"
+                  string+=" ${tmp/-/ - } "
+                  string+=" "
+                  string+=" $( cat "$RESOURCES/h-unsaved" ) "
+                  echo "$string"
                   printf "\033[0m"
             fi
             msg="${class%=*} ** `echo ${class#*=} |sed 's/-/ - /'`"
@@ -241,7 +261,7 @@ function handleBreakDays(){
                 question+="$(cat "$RESOURCES/is") $name  $(cat "$RESOURCES/Q-mark") "
                 echo "$question"
                 echo 
-                IFS= read -rN 1 -p " : " choice
+                IFS= read -rN 1 -p " (y/n) : " choice
                 echo 
                 case "$choice" in
                    y|Y)
@@ -383,6 +403,9 @@ function editEntry(){
 
       printf '%s\n' "/$pattern1/+1,/$pattern2/-1d" "/$pattern1/a" "$text2" . wq | ed -s "$theBookDir/$theBook"
       sed -i '/^$/d' "$theBookDir/$theBook"
+
+      lnumber=$( grep -n "$entryDATE" "$LOGFILE" | grep "period$entryNUM"| cut -d: -f1 )
+      sed   --in-place -e "${lnumber} s/:auto//" "$LOGFILE"
 }
 
 # $1 v for verbose
@@ -479,13 +502,14 @@ function openIT(){
 function backUP(){
   local year="$(date '+%Y')"
   if (( `date '+%m'` >= 9 )) 
-      then  local backupDir="$workingDir/backup/$year-$((year+1))"
-      else  local backupDir="$workingDir/backup/$((year-1))-$year"
+      then  local backupDir="$workingDir/backup/$year-$((year+1))/`date '+%d-%m'`"
+      else  local backupDir="$workingDir/backup/$((year-1))-$year/`date '+%d-%m'`"
   fi
   if ! [ -d "$backupDir" ] ; then
       mkdir -p "$backupDir"
   fi
   rsync -aq "$theBookDir" "$backupDir" --exclude backup
+  printf "\033[1;32m success\n"
 }
 
 function _printhelp () {
@@ -500,9 +524,19 @@ function SYear(){
   fi
 }
 
+function getUnsaved(){
+    echo
+    printf '\t'
+    echo "$(cat "$RESOURCES/unsaved" )"
+    echo
+    grep auto "$LOGFILE" | awk -F: '{print $1,$3," ",$2}' |sed 's/^/\t/;s/period//g'|cat -n
+    echo
+}
+
 function printhelp () {
-  _printhelp  "" "$(cat "$RESOURCES/h-save" )"
+   echo
   _printhelp  "h,H,help" "$(cat "$RESOURCES/h-help" )"
+  _printhelp  "" "$(cat "$RESOURCES/h-save" )"
   _printhelp  "a,A,add" "$(cat "$RESOURCES/h-add" )"
   _printhelp  "e,E,edit [d-m-Y] [#N]" "$(cat "$RESOURCES/h-edit" )"
   _printhelp  "p,P,print" "$(cat "$RESOURCES/h-print" )"
@@ -510,6 +544,8 @@ function printhelp () {
   _printhelp  "o,O,open" "$(cat "$RESOURCES/h-open" )"
   _printhelp  "oo" "$(cat "$RESOURCES/h-oopen" )"
   _printhelp  "b,B,backup" "$(cat "$RESOURCES/h-backup" ) $( SYear ) "
+  _printhelp  "u,U,unsaved" "$(cat "$RESOURCES/h-auto" )"
+  echo
 }
 
 #save entries for all unsaved days before today
@@ -526,6 +562,7 @@ case "$1" in
              oo)    gedit  "$theBookDir/product.tex" & ;;
        view|v|V)    okular "$theBookDir/product.pdf" 2>&1 2>/dev/null & ;;
        help|h|H)    printhelp ;;
+    unsaved|u|U)    getUnsaved ;;
      backup|b|B)    backUP ;;
 esac
 

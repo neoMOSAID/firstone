@@ -1,0 +1,29 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_OUTPUT_MODE	u-ctags	/u-ctags or e-ctags/
+!_TAG_PROGRAM_AUTHOR	Universal Ctags Team	//
+!_TAG_PROGRAM_NAME	Universal Ctags	/Derived from Exuberant Ctags/
+!_TAG_PROGRAM_URL	https://ctags.io/	/official site/
+!_TAG_PROGRAM_VERSION	0.0.0	/45968eff/
+EditIT	textBook.sh	/^function EditIT(){$/;"	f
+SYear	textBook.sh	/^function SYear(){$/;"	f
+SaveTheFile	textBook.sh	/^function SaveTheFile(){$/;"	f
+_printhelp	textBook.sh	/^function _printhelp () {$/;"	f
+addPeriod	textBook.sh	/^function addPeriod(){$/;"	f
+allsaved0	textBook.sh	/^function allsaved0(){$/;"	f
+allsaved1	textBook.sh	/^function allsaved1(){$/;"	f
+backUP	textBook.sh	/^function backUP(){$/;"	f
+checkIfAllsaved	textBook.sh	/^function checkIfAllsaved(){$/;"	f
+convertAndGetDate	textBook.sh	/^function convertAndGetDate(){$/;"	f
+editEntry	textBook.sh	/^function editEntry(){$/;"	f
+editing	textBook.sh	/^function editing(){$/;"	f
+getUnsaved	textBook.sh	/^function getUnsaved(){$/;"	f
+handleBreakDays	textBook.sh	/^function handleBreakDays(){$/;"	f
+headerA	textBook.sh	/^function headerA(){$/;"	f
+headerB	textBook.sh	/^function headerB(){$/;"	f
+makeIT	textBook.sh	/^function makeIT(){$/;"	f
+openIT	textBook.sh	/^function openIT(){$/;"	f
+printhelp	textBook.sh	/^function printhelp () {$/;"	f
+savePeriods	textBook.sh	/^function savePeriods(){$/;"	f
+showMenu	textBook.sh	/^function showMenu(){$/;"	f
+startup	textBook.sh	/^function startup(){$/;"	f
