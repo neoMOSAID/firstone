@@ -3,3 +3,4 @@ backup/*
 theBook/*.pdf
 theBook/*.tex
 theBook/logfile
+tags
