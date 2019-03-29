@@ -1,6 +1,6 @@
 #!/bin/bash
 #=======================================
-#   script to create a journal for my 
+#   script to create a journal for my
 #   job as a high school Maths teacher
 #=======================================
 #============ Global files ==========
@@ -18,14 +18,15 @@ fi
 data="$(cat "$workingDir/files/tableau"|awk '{$1=""; for(i=2;i<=NF;i++)printf("%s\n",$i);}'|cut -d= -f1|sort|uniq)"
 IFS=$'\r\n' classes=($(echo "$data"))
 for (( i1 = 0 ; i1 < ${#classes[@]} ; i1++ )) ; do
-    if ! [ -f "$theBookDir/${classes[$i1]}.tex" ] ; then
+    if ! [[ -f "$theBookDir/${classes[$i1]}.tex" ]] ; then
       touch "$theBookDir/${classes[$i1]}.tex"
     fi
 done
 #==============================
 str=""
 #yearStart='2018-09-10'
-yearStart='2018-12-14'
+#yearStart='2018-12-14'
+yearStart='2019-3-14'
 #==============================
 
 # $1 class
@@ -61,7 +62,7 @@ function headerA(){
 }
 
 # $1 name of holyday
-# $2 first day 
+# $2 first day
 # $3 last day
 function headerB(){
   entryDATE=$(date --date "-$MINUSDAYS days" +'%d-%m-%Y')
@@ -74,7 +75,7 @@ function headerB(){
   # %N begin
   str="$str"$'\n'"%%:$entryDATE:begin"
 
-  if [ -z "$3" ] 
+  if [ -z "$3" ]
       then
           str="$str"$'\n'"$2 : $1"
       else
@@ -88,8 +89,8 @@ function headerB(){
 
 
 
-# $1 period number 
-# $2 y for auto saving 
+# $1 period number
+# $2 y for auto saving
 function SaveTheFile(){
       local periodNum=$1
       local today=`date --date "-$MINUSDAYS days" +'%d-%m-%Y'`
@@ -126,21 +127,21 @@ function editing(){
     local periodNum=$1
     while true ; do
         tput reset
-        if [[ "$2" != "y" ]] 
+        if [[ "$2" != "y" ]]
             then
-                 "$removeLatex" "$str" 
+                 "$removeLatex" "$str"
                   echo
             else
                   echo
-                  echo -ne "\t saving... $entryDATE"\\r 
+                  echo -ne "\t saving... $entryDATE"\\r
         fi
-        if [[ "$2" != "y" ]] 
+        if [[ "$2" != "y" ]]
             then
                 menu="(a)arabic text (e)equation/latin text (f)insert pdf \n  (s)save & exit (x)quit w/o saving "
                 printf "\033[1;33m"
                 echo "=============================================================="
                 printf "\033[0m"
-                showMenu "$menu" 
+                showMenu "$menu"
                 printf "\033[1;33m"
                 echo "=============================================================="
                 echo
@@ -156,13 +157,13 @@ function editing(){
               e)    echo "$str" >| "$tmpfile"
                     vim "$tmpfile"
                     str="$(cat "$tmpfile" ) \\\\"  ;;
-              f) 
+              f)
                     file1="$(find "$HOME" -type f -iname "*.pdf" 2>/dev/null |fzf)"
                     cp "$file1" "$theBookDir/pdf-`date --date "-$MINUSDAYS days" +'%d-%m-%Y'`.pdf"
                     str="$str"$'\n'"\\includepdf[pages={1}]{pdf-`date --date "-$MINUSDAYS days" +'%d-%m-%Y'`.pdf}" ;;
-              s)    SaveTheFile "$periodNum" "$2" 
+              s)    SaveTheFile "$periodNum" "$2"
                     if [[ "$2" != "y" ]] ;
-                        then exit 
+                        then exit
                         else return
                     fi ;;
               x)    exit ;;
@@ -219,7 +220,7 @@ function allsaved0(){
             fi
             if [[ "$answer" == "y" || "$answer" == "Y" ]] ; then
                   headerA  ${class%=*}  "`echo ${class#*=} |sed 's/-/ - /'`" "$periodNum"
-                  editing  $periodNum  "$2" 
+                  editing  $periodNum  "$2"
             fi
       fi
   done 3<<< "$today_periods_from_log"
@@ -228,7 +229,7 @@ function allsaved0(){
 # $1 status
 # $2 y for automatic saving
 function savePeriods(){
-   if (( allsaved == 1 )) 
+   if (( allsaved == 1 ))
       then allsaved1 "$1" "$2"
       else allsaved0 "$1" "$2"
    fi
@@ -252,17 +253,29 @@ function handleBreakDays(){
         fi
         local name=$(grep "$today" "$workingDir/files/breakdays"|awk -F: '{print $2}')
         local today=$(grep "$today" "$workingDir/files/breakdays"|awk -F: '{print $1}')
-        if `echo "$today" |grep '\*' >/dev/null` 
+        if `echo "$today" |grep '\*' >/dev/null`
             then
                 local nbrDays=$(echo $today |cut -d* -f2)
                 local cleaned="$(echo $today |cut -d* -f1)"
                 echo
                 question="$(cat "$RESOURCES/Q-is") $( convertAndGetDate "$cleaned" 0 ) "
                 question+="$(cat "$RESOURCES/is") $name  $(cat "$RESOURCES/Q-mark") "
-                echo "$question"
-                echo 
-                IFS= read -rN 1 -p " (y/n) : " choice
-                echo 
+                diff=0
+                diff=$((oldKK-kk))
+                if (( $diff >7 && $diff != $kk )) ; then
+                    Oldchoice=""
+                fi
+                if [[ "$Oldchoice" == 'y' ]]
+                    then
+                        choice=n
+                    else
+                        echo "$question"
+                        echo
+                        IFS= read -rN 1 -p " (y/n) : " choice
+                        Oldchoice=$choice
+                        oldKK=$kk
+                        echo
+                fi
                 case "$choice" in
                    y|Y)
                         local is_muslim_holiday=1
@@ -279,14 +292,16 @@ function handleBreakDays(){
                 local lastOne=$(grep "$name" "$workingDir/files/breakdays"|awk -F: '{print $1}'|tail -1)
                 local LASTONE="$( convertAndGetDate "$lastOne" 0 )"
         fi
-        if [[ "$FIRSTONE" != "$LASTONE" ]] 
-            then 
+        if [[ "$FIRSTONE" != "$LASTONE" ]]
+            then
                   headerB  "$name" "$FIRSTONE" "$LASTONE"
                   local allOfThem=$(grep "$name" "$workingDir/files/breakdays"|awk -F: '{print $1}')
                   while read -r line ; do
                         echo $line:saved:$name >> "$LOGFILE"
                   done <<< "$allOfThem"
-            else  headerB  "$name" "$FIRSTONE"
+            else
+                headerB  "$name" "$FIRSTONE"
+                echo $firstOne:saved:$name >> "$LOGFILE"
         fi
         data="$(cat "$workingDir/files/tableau"|awk '{$1=""; for(i=2;i<=NF;i++)printf("%s\n",$i);}'|cut -d= -f1|sort|uniq)"
         IFS=$'\r\n' classes=($(echo "$data"))
@@ -311,7 +326,7 @@ function startup(){
     local today_periods_from_log=$(grep ^"$today" "$LOGFILE")
     local number_of_periods=$(cat "$workingDir/files/tableau"|grep ^`date --date "-$MINUSDAYS days" +'%a'`|awk '{print NF-1 }')
     local periods_of_today=$(cat "$workingDir/files/tableau"|grep ^`date --date "-$MINUSDAYS days" +'%a'`|awk '{$1="";print $0 }')
-    if [[ "$today_periods_from_log" == "" ]] 
+    if [[ "$today_periods_from_log" == "" ]]
         then
             for (( k4=1 ;k4<=$number_of_periods;k4++)) ; do
               local class=$(echo "$periods_of_today" | awk -v var="$k4" '{print $var}')
@@ -320,7 +335,7 @@ function startup(){
             done
             allsaved=0
         else
-            if ! `echo "$today_periods_from_log" | grep unsaved >/dev/null` 
+            if ! `echo "$today_periods_from_log" | grep unsaved >/dev/null`
                 then allsaved=1
                 else allsaved=0
             fi
@@ -340,7 +355,7 @@ function EditIT(){
             menu="(a)arabic text (e)equation/text (f)insert pdf (x) save & exit"
             printf "\033[1;33m"
             echo "=============================================================="
-            showMenu "$menu" 
+            showMenu "$menu"
             printf "\033[1;33m"
             echo "=============================================================="
             echo
@@ -354,7 +369,7 @@ function EditIT(){
                   e)   echo "$text2" >| "$tmpfile"
                        vim "$tmpfile"
                        text2=$(cat "$tmpfile" ) ;;
-                  f) 
+                  f)
                        file1="$(find "$HOME" -type f -iname "*.pdf" 2>/dev/null |fzf)"
                        cp "$file1" "$theBookDir/pdf-$EditedEntryDATE.pdf"
                        text2+="$text2 \\\\"$'\n'"\\includepdf[pages={1}]{pdf-$EditedEntryDATE.pdf}"
@@ -369,12 +384,12 @@ function EditIT(){
 function editEntry(){
       entryDATE=$1
       if [ -z "$entryDATE" ] ; then return ; fi
-      if [ -z $2 ] 
+      if [ -z $2 ]
             then entryNUM=1
             else entryNUM=$2
       fi
       theBook="$(grep  "$entryDATE" "$LOGFILE"|grep "period$entryNUM")"
-      if [ -z "$theBook" ] ; then 
+      if [ -z "$theBook" ] ; then
           echo not found !
           exit
       fi
@@ -421,10 +436,10 @@ function makeIT(){
     echo "\\end{document}" >> "$theBookDir/product.tex"
     cd "$theBookDir/"
     if [[ "$1" == "v" ]] ; then
-        xelatex "product.tex" 
+        xelatex "product.tex"
         return
     fi
-    if `xelatex "product.tex" |grep "Output written on" >/dev/null` 
+    if `xelatex "product.tex" |grep "Output written on" >/dev/null`
         then
             printf "\033[1;32m success\n"
             rm *.log *.aux
@@ -435,16 +450,18 @@ function makeIT(){
 
 function addPeriod(){
   str=""
-  data="$(cat "$workingDir/files/tableau"|awk '{$1=""; for(i=2;i<=NF;i++)printf("%s\n",$i);}'|cut -d= -f1|sort|uniq)"
+  data="$(cat "$workingDir/files/tableau" \
+      |awk '{$1=""; for(i=2;i<=NF;i++)printf("%s\n",$i);}' \
+      |cut -d= -f1|sort|uniq)"
   IFS=$'\r\n' classes=($(echo "$data"))
   printf "\033[1;32m\n"
-  echo "   $(cat "$RESOURCES/add-menu")   " 
+  echo "   $(cat "$RESOURCES/add-menu")   "
   echo
   for ((k1=0;k1<${#classes[@]};k1++)) ; do
     echo " $((k1+1))) ${classes[$k1]}"
   done
   echo " x) exit"
-  echo 
+  echo
   IFS= read -rN 1 -p " : " choice
   printf "\033[0m\n"
   if ! [[ "$choice" =~ ^[0-9] ]] ; then exit ; fi
@@ -452,14 +469,14 @@ function addPeriod(){
   if (( $choice >= ${#classes[@]} )) ; then return ; fi
   if (( $choice < 0 )) ; then return ; fi
   headerA  "${classes[$choice]}" "$(cat "$RESOURCES/ext-period")"
-  editing 
+  editing
 }
 
 # $1 can be status
 function checkIfAllsaved(){
   local today=`date '+%Y-%m-%d'`
   local lastSavedDay=$(cat "$LOGFILE"|grep -w saved |tail -1|cut -d: -f1)
-  if [ -z "$lastSavedDay" ] 
+  if [[ -z "$lastSavedDay" ]]
       then lastSavedDay="$yearStart"
       else lastSavedDay=$(echo "$lastSavedDay"|awk -F- '{printf("%s-%s-%s",$3,$2,$1)}')
   fi
@@ -468,11 +485,11 @@ function checkIfAllsaved(){
   for (( kk=$nn; kk >= 0 ; kk-- )) ; do
       MINUSDAYS=$kk
       startup
-      if (( $kk > 0 )) 
+      if (( $kk > 0 ))
           then savePeriods  "s" "y"
-          else 
-              savePeriods "status" 
-              if [[ "$1" == "status" ]] 
+          else
+              savePeriods "status"
+              if [[ "$1" == "status" ]]
                   then exit
               fi
       fi
@@ -483,13 +500,13 @@ function openIT(){
     data="$(cat "$workingDir/files/tableau"|awk '{$1=""; for(i=2;i<=NF;i++)printf("%s\n",$i);}'|cut -d= -f1|sort|uniq)"
     IFS=$'\r\n' classes=($(echo "$data"))
     printf "\033[1;32m\n"
-    echo "   $(cat "$RESOURCES/open-class")   " 
+    echo "   $(cat "$RESOURCES/open-class")   "
     echo
     for ((k1=0;k1<${#classes[@]};k1++)) ; do
       echo " $((k1+1))) ${classes[$k1]}"
     done
     echo " x) exit"
-    echo 
+    echo
     IFS= read -rN 1 -p " : " choice
     printf "\033[0m\n"
     if ! [[ "$choice" =~ ^[0-9] ]] ; then exit ; fi
@@ -501,7 +518,7 @@ function openIT(){
 
 function backUP(){
   local year="$(date '+%Y')"
-  if (( `date '+%m'` >= 9 )) 
+  if (( `date '+%m'` >= 9 ))
       then  local backupDir="$workingDir/backup/$year-$((year+1))/`date '+%d-%m'`"
       else  local backupDir="$workingDir/backup/$((year-1))-$year/`date '+%d-%m'`"
   fi
@@ -518,19 +535,42 @@ function _printhelp () {
 
 function SYear(){
   local year="$(date '+%Y')"
-  if (( `date '+%m'` >= 9 )) 
+  if (( `date '+%m'` >= 9 ))
         then  echo "$year-$((year+1))"
         else  echo "$((year-1))-$year"
   fi
 }
 
 function getUnsaved(){
-    echo
-    printf '\t'
-    echo "$(cat "$RESOURCES/unsaved" )"
-    echo
-    grep auto "$LOGFILE" | awk -F: '{print $1,$3," ",$2}' |sed 's/^/\t/;s/period//g'|cat -n
-    echo
+    data=$(
+        echo
+        printf '\t'
+        echo "$(cat "$RESOURCES/unsaved" )"
+        echo
+        grep auto "$LOGFILE"  \
+        | awk -F: '{print $1,$3," ",$2}' \
+        | sed 's/^/\t/;s/period//g' \
+        | cat -n
+        echo
+    )
+    if [[ -z "$1" ]] ; then
+        echo "$data"
+        return
+    fi
+    number='^[0-9]+$'
+    if [[ "$1" =~ $number ]] ; then
+        n=$1
+        n=$((n+3))
+        periode1=$( echo "$data" \
+                   | sed -n "$n"p \
+                   | awk '{print $2}'
+                )
+        periode2=$( echo "$data" \
+                    | sed -n "$n"p \
+                    | awk '{print $3}'
+                  )
+        bash "$0" e $periode1 $periode2
+    fi
 }
 
 function printhelp () {
@@ -548,11 +588,18 @@ function printhelp () {
   echo
 }
 
+function removeFiles(){
+    rm  "$LOGFILE"  2>/dev/null
+    rm  "$theBookDir/product.pdf"  2>/dev/null
+    cd  "$theBookDir"
+    rm  *.tex  2>/dev/null
+}
+
 #save entries for all unsaved days before today
 #abscence/pc not powered up/...
 checkIfAllsaved "$1"
 
-case "$1" in 
+case "$1" in
              "")    savePeriods ;;
        edit|e|E)    editEntry $2 $3 ;;
         add|a|A)    addPeriod ;;
@@ -562,8 +609,9 @@ case "$1" in
              oo)    gedit  "$theBookDir/product.tex" & ;;
        view|v|V)    okular "$theBookDir/product.pdf" 2>&1 2>/dev/null & ;;
        help|h|H)    printhelp ;;
-    unsaved|u|U)    getUnsaved ;;
+    unsaved|u|U)    getUnsaved "$2" ;;
      backup|b|B)    backUP ;;
+     remove|r|R)    removeFiles ;;
 esac
 
 
