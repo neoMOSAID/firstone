@@ -25,8 +25,8 @@ done
 #==============================
 str=""
 #yearStart='2018-09-10'
-#yearStart='2018-12-14'
-yearStart='2019-3-14'
+yearStart='2018-12-14'
+#yearStart='2019-3-14'
 #==============================
 
 # $1 class
@@ -550,6 +550,7 @@ function getUnsaved(){
         grep auto "$LOGFILE"  \
         | awk -F: '{print $1,$3," ",$2}' \
         | sed 's/^/\t/;s/period//g' \
+        | grep --color=never "$1" \
         | cat -n
         echo
     )
@@ -558,19 +559,24 @@ function getUnsaved(){
         return
     fi
     number='^[0-9]+$'
-    if [[ "$1" =~ $number ]] ; then
-        n=$1
-        n=$((n+3))
-        periode1=$( echo "$data" \
-                   | sed -n "$n"p \
-                   | awk '{print $2}'
-                )
-        periode2=$( echo "$data" \
-                    | sed -n "$n"p \
-                    | awk '{print $3}'
-                  )
-        bash "$0" e $periode1 $periode2
+    if ! [[ "$1" =~ $number ]] && [[ -z "$2" ]] ; then
+        echo "$data"
+        return
     fi
+    if [[ "$1" =~ $number ]]  && [[ -z "$2" ]] ; then
+        n=$1
+    fi
+    if [[ "$2" =~ $number ]] ; then n=$2 ; fi
+    n=$((n+3))
+    periode1=$( echo "$data" \
+                | sed -n "$n"p \
+                | awk '{print $2}'
+            )
+    periode2=$( echo "$data" \
+                | sed -n "$n"p \
+                | awk '{print $3}'
+            )
+    bash "$0" e $periode1 $periode2
 }
 
 function printhelp () {
@@ -609,7 +615,7 @@ case "$1" in
              oo)    gedit  "$theBookDir/product.tex" & ;;
        view|v|V)    okular "$theBookDir/product.pdf" 2>&1 2>/dev/null & ;;
        help|h|H)    printhelp ;;
-    unsaved|u|U)    getUnsaved "$2" ;;
+    unsaved|u|U)    getUnsaved "$2" "$3" ;;
      backup|b|B)    backUP ;;
      remove|r|R)    removeFiles ;;
 esac
