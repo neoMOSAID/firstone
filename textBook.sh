@@ -24,9 +24,7 @@ for (( i1 = 0 ; i1 < ${#classes[@]} ; i1++ )) ; do
 done
 #==============================
 str=""
-#yearStart='2018-09-10'
-yearStart='2018-12-14'
-#yearStart='2019-3-14'
+yearStart='2019-09-09'
 #==============================
 
 # $1 class
@@ -198,15 +196,13 @@ function allsaved0(){
             local periodNum=$(echo "$line" | awk -F: '{print $3}'|tr -dc '0-9' )
             local class=$(echo "$periods_of_today" | awk -v var="$periodNum" '{print $var}')
             if [[ "$1" == "status" ]] ; then
-                  printf "\033[1;31m"
-                  string=" $(cat "$RESOURCES/periodA" ) "
-                  string+=" ${class%=*} "
-                  string+=" "
+                  speriode=" $(cat "$RESOURCES/periodA" ) "
+                  sclass=" ${class%=*} "
                   tmp="${class#*=}"
-                  string+=" ${tmp/-/ - } "
-                  string+=" "
-                  string+=" $( cat "$RESOURCES/h-unsaved" ) "
-                  echo "$string"
+                  stmp=" ${tmp/-/ - } "
+                  sunsaved=" $( cat "$RESOURCES/h-unsaved" ) "
+                  printf '\033[1;31m%-10s %-12s %-10s %-15s\n' \
+                  "$speriode" "$sclass" "$stmp" "$sunsaved"
                   printf "\033[0m"
             fi
             msg="${class%=*} ** `echo ${class#*=} |sed 's/-/ - /'`"
@@ -610,7 +606,7 @@ case "$1" in
        edit|e|E)    editEntry $2 $3 ;;
         add|a|A)    addPeriod ;;
       print|p|P)    makeIT $2 ;;
-     status|s|S)    savePeriods "status" ;;
+     status|s|S)    exit;;       #savePeriods "status" ;;
        open|o|O)    openIT ;;
              oo)    gedit  "$theBookDir/product.tex" & ;;
        view|v|V)    okular "$theBookDir/product.pdf" 2>&1 2>/dev/null & ;;
