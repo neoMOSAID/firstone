@@ -202,7 +202,8 @@ function allsaved0(){
                   stmp=" ${tmp/-/ - } "
                   sunsaved=" $( cat "$RESOURCES/h-unsaved" ) "
                   printf '\033[1;31m%-10s %-12s %-10s %-15s\n' \
-                  "$speriode" "$sclass" "$stmp" "$sunsaved"
+                  "$sunsaved"  "$sclass" "$stmp" "$speriode"
+                  #"$speriode" "$sclass" "$stmp" "$sunsaved"
                   printf "\033[0m"
             fi
             msg="${class%=*} ** `echo ${class#*=} |sed 's/-/ - /'`"
