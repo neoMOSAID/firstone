@@ -5,7 +5,7 @@
 #=======================================
 #============ Global files ==========
 workingDir=$( cd "$(dirname "$0")" ; pwd -P )
-tmpfile="$workingDir/.tmp.tex"
+tmpfile="/tmp/textBook_tmp.tex"
 theBookDir="$workingDir/theBook"
 RESOURCES="$workingDir/resources"
 LOGFILE="$theBookDir/logfile"
@@ -587,7 +587,6 @@ function printhelp () {
   _printhelp  "p,P,print" "$(cat "$RESOURCES/h-print" )"
   _printhelp  "s,S,status" "$(cat "$RESOURCES/h-status" )"
   _printhelp  "o,O,open" "$(cat "$RESOURCES/h-open" )"
-  _printhelp  "oo" "$(cat "$RESOURCES/h-oopen" )"
   _printhelp  "b,B,backup" "$(cat "$RESOURCES/h-backup" ) $( SYear ) "
   _printhelp  "u,U,unsaved" "$(cat "$RESOURCES/h-auto" )"
   echo
@@ -611,8 +610,7 @@ case "$1" in
       print|p|P)    makeIT $2 ;;
      status|s|S)    exit;;       #savePeriods "status" ;;
        open|o|O)    openIT ;;
-             oo)    gedit  "$theBookDir/product.tex" & ;;
-       view|v|V)    okular "$theBookDir/product.pdf" 2>&1 2>/dev/null & ;;
+       view|v|V)    okular "$theBookDir/product.pdf" >/dev/nul 2>&1 & ;;
        help|h|H)    printhelp ;;
     unsaved|u|U)    getUnsaved "$2" "$3" ;;
      backup|b|B)    backUP ;;
