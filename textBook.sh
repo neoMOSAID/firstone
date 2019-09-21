@@ -197,20 +197,20 @@ function allsaved0(){
             local class=$(echo "$periods_of_today" | awk -v var="$periodNum" '{print $var}')
             if [[ "$1" == "status" ]] ; then
                   speriode=" $(cat "$RESOURCES/periodA" ) "
+                  sunsaved=" $( cat "$RESOURCES/h-unsaved" ) "
                   sclass=" ${class%=*} "
                   tmp="${class#*=}"
                   stmp=" ${tmp/-/ - } "
-                  sunsaved=" $( cat "$RESOURCES/h-unsaved" ) "
-                  printf '\033[1;31m%-10s %-12s %-10s %-15s\n' \
-                  "$sunsaved"  "$sclass" "$stmp" "$speriode"
-                  #"$speriode" "$sclass" "$stmp" "$sunsaved"
-                  printf "\033[0m"
+                  printf '\033[1;31m%-10s' "$stmp"
+                  printf '\033[1;31m%-10s' "$sclass"
+                  printf '\033[1;31m%-10s' "$sunsaved"
+                  printf '\033[0m\n'
             fi
             msg="${class%=*} ** `echo ${class#*=} |sed 's/-/ - /'`"
             if [[ "$2" != "y" ]]
                 then
                     if [[ "$1" != "status" ]] ; then
-                        IFS= read -rN 1 -p "Save entry for $msg (Y/n)?" answer
+                        IFS= read -rN 1 -p " $msg  $(cat "$RESOURCES/h-saveOne" ) (Y/n)?" answer
                         echo
                     fi
                 else answer="y"
@@ -422,7 +422,10 @@ function editEntry(){
 
 # $1 v for verbose
 function makeIT(){
-    cat "$theBookDir/header" | sed "s/insertNAMEhere/$(cat "$workingDir/files/name")/g" >| "$theBookDir/product.tex"
+    cat "$theBookDir/header" \
+    | sed "s/insertNAMEhere/$(cat "$workingDir/files/name")/g" \
+    | sed "s/insertSYEARhere/$(SYear)/g" \
+    >| "$theBookDir/product.tex"
     data="$(cat "$workingDir/files/tableau"|awk '{$1=""; for(i=2;i<=NF;i++)printf("%s\n",$i);}'|cut -d= -f1|sort|uniq)"
     IFS=$'\r\n' classes=($(echo "$data"))
     for (( i1 = 0 ; i1 < ${#classes[@]} ; i1 ++)) ; do
@@ -515,10 +518,7 @@ function openIT(){
 
 function backUP(){
   local year="$(date '+%Y')"
-  if (( `date '+%m'` >= 9 ))
-      then  local backupDir="$workingDir/backup/$year-$((year+1))/`date '+%d-%m'`"
-      else  local backupDir="$workingDir/backup/$((year-1))-$year/`date '+%d-%m'`"
-  fi
+  local backupDir="$workingDir/backup/$(SYear)/`date '+%d-%m'`"
   if ! [ -d "$backupDir" ] ; then
       mkdir -p "$backupDir"
   fi
@@ -531,8 +531,10 @@ function _printhelp () {
 }
 
 function SYear(){
-  local year="$(date '+%Y')"
-  if (( `date '+%m'` >= 9 ))
+  local year=$(date '+%Y')
+  local dd=$(date '+%m')
+  dd=$(echo $dd | sed 's/^0*//')
+  if (( $dd >= 9 ))
         then  echo "$year-$((year+1))"
         else  echo "$((year-1))-$year"
   fi
