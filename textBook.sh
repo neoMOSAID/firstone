@@ -323,6 +323,7 @@ function startup(){
     local today_periods_from_log=$(grep ^"$today" "$LOGFILE")
     local number_of_periods=$(cat "$workingDir/files/tableau"|grep ^`date --date "-$MINUSDAYS days" +'%a'`|awk '{print NF-1 }')
     local periods_of_today=$(cat "$workingDir/files/tableau"|grep ^`date --date "-$MINUSDAYS days" +'%a'`|awk '{$1="";print $0 }')
+    [[ -z "$number_of_periods" ]] && return
     if [[ "$today_periods_from_log" == "" ]]
         then
             for (( k4=1 ;k4<=$number_of_periods;k4++)) ; do
@@ -610,7 +611,7 @@ case "$1" in
       print|p|P)    makeIT $2 ;;
      status|s|S)    exit;;       #savePeriods "status" ;;
        open|o|O)    openIT ;;
-       view|v|V)    okular "$theBookDir/product.pdf" >/dev/nul 2>&1 & ;;
+       view|v|V)    okular "$theBookDir/product.pdf" >/dev/null 2>&1 & ;;
        help|h|H)    printhelp ;;
     unsaved|u|U)    getUnsaved "$2" "$3" ;;
      backup|b|B)    backUP ;;
