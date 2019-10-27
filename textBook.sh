@@ -34,7 +34,7 @@ function headerA(){
     entryDATE=$(date --date "-$MINUSDAYS days" +'%d-%m-%Y')
     local periodNum=$3
 
-    str="$str"$'\n''\par'
+    str=$'\n''\par'
     str="$str"$'\n''\noindent\makebox[\linewidth]{\rule{\paperwidth}{0.4pt}}'
 
     str="$str"$'\n'' \\'
