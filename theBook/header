@@ -3,6 +3,8 @@
 \usepackage{amsfonts, amsmath, amssymb}
 \usepackage{fontspec}
 \usepackage[none]{hyphenat}
+\usepackage{siunitx}
+\usepackage{tabu,multirow}
 
 \usepackage{pdfpages}
 \usepackage{lastpage}

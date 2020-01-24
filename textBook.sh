@@ -15,11 +15,16 @@ if ! [ -f "$LOGFILE" ] ; then
     touch "$LOGFILE"
 fi
 #==================== create a file for each classe
-data="$(cat "$workingDir/files/tableau"|awk '{$1=""; for(i=2;i<=NF;i++)printf("%s\n",$i);}'|cut -d= -f1|sort|uniq)"
+data="$(cat "$workingDir/files/tableau"|
+        awk '{$1=""; for(i=2;i<=NF;i++)printf("%s\n",$i);}'|
+        cut -d= -f1|sort|uniq)"
 IFS=$'\r\n' classes=($(echo "$data"))
 for (( i1 = 0 ; i1 < ${#classes[@]} ; i1++ )) ; do
     if ! [[ -f "$theBookDir/${classes[$i1]}.tex" ]] ; then
       touch "$theBookDir/${classes[$i1]}.tex"
+    fi
+    if ! [[ -f "$theBookDir/${classes[$i1]}-list" ]] ; then
+        touch "$theBookDir/${classes[$i1]}-list"
     fi
 done
 #==============================
@@ -135,7 +140,8 @@ function editing(){
         fi
         if [[ "$2" != "y" ]]
             then
-                menu="(a)arabic text (e)equation/latin text (f)insert pdf \n  (s)save & exit (x)quit w/o saving "
+                menu="(a)arabic text (e)equation/latin text (f)insert pdf/image \n"
+                menu+="  (s)save & exit (x)quit w/o saving "
                 printf "\033[1;33m"
                 echo "=============================================================="
                 printf "\033[0m"
@@ -156,9 +162,13 @@ function editing(){
                     vim "$tmpfile"
                     str="$(cat "$tmpfile" ) \\\\"  ;;
               f)
-                    file1="$(find "$HOME" -type f -iname "*.pdf" 2>/dev/null |fzf)"
-                    cp "$file1" "$theBookDir/pdf-`date --date "-$MINUSDAYS days" +'%d-%m-%Y'`.pdf"
-                    str="$str"$'\n'"\\includepdf[pages={1}]{pdf-`date --date "-$MINUSDAYS days" +'%d-%m-%Y'`.pdf}" ;;
+                    file1="$(find "$HOME" -type f \
+                    \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.pdf" \) \
+                    2>/dev/null |fzf)"
+                    ext=${file1##*.}
+                    cp "$file1" "$theBookDir/file-`date --date "-$MINUSDAYS days" +'%d-%m-%Y'`.$ext"
+                    str+=$'\n'"\\includepdf[pages={1}]"
+                    str+="{pdf-`date --date "-$MINUSDAYS days" +'%d-%m-%Y'`.$ext}" ;;
               s)    SaveTheFile "$periodNum" "$2"
                     if [[ "$2" != "y" ]] ;
                         then exit
@@ -348,9 +358,10 @@ function EditIT(){
       while true ; do
             tput reset
             echo
-            echo "$text2"
+            "$removeLatex" "$text2"
             echo
-            menu="(a)arabic text (e)equation/text (f)insert pdf (x) save & exit"
+            menu="(a)arabic text (e)equation/text\n"
+            menu+="  (f)insert pdf/image (x) save & exit"
             printf "\033[1;33m"
             echo "=============================================================="
             showMenu "$menu"
@@ -368,9 +379,12 @@ function EditIT(){
                        vim "$tmpfile"
                        text2=$(cat "$tmpfile" ) ;;
                   f)
-                       file1="$(find "$HOME" -type f -iname "*.pdf" 2>/dev/null |fzf)"
-                       cp "$file1" "$theBookDir/pdf-$EditedEntryDATE.pdf"
-                       text2+="$text2 \\\\"$'\n'"\\includepdf[pages={1}]{pdf-$EditedEntryDATE.pdf}"
+                       file1="$(find "$HOME" -type f \
+                       \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.pdf" \) \
+                       2>/dev/null |fzf)"
+                       ext=${file1##*.}
+                       cp "$file1" "$theBookDir/file-$EditedEntryDATE.$ext"
+                       text2+=$'\n'"\\includepdf[pages={1}]{file-$EditedEntryDATE.$ext}"
                        ;;
                   x) return ;;
              esac
@@ -421,16 +435,81 @@ function editEntry(){
       sed   --in-place -e "${lnumber} s/:auto//" "$LOGFILE"
 }
 
+# $1 : class name
+function makeTable(){
+str1='
+\begin{table}[]
+\caption{'"$1"'}
+\centering
+\setlength{\extrarowheight}{4pt}
+\resizebox{\textwidth}{!}{%
+\begin{tabu}{|c|c|[2pt]c|c|c|c|[2pt]c|c|c|c|[2pt]c|}
+\hline
+'
+str1+='  &   & \multicolumn{4}{c|}{'" $(cat "$RESOURCES/semester")"' 1} '
+str1+='     & \multicolumn{4}{c|}{'" $(cat "$RESOURCES/semester")"' 2} '
+str1+='     &  '"$(cat "$RESOURCES/ng")"' \\ \hline
+'
+str1+="No & $(cat "$RESOURCES/name") "
+str2=''
+for k in {1..4} ; do
+    str2+="&   $(cat "$RESOURCES/ds") $k "
+done
+
+str1+="$str2 $str2"
+str1+='  &  \\ \hline
+'
+
+ll=1
+while read -r name ; do
+    str1+=" $ll & $name"
+    for k in {1..8} ; do
+        str1+=' & '
+    done
+    str1+=' & \\ \hline'$'\n'
+    ll=$((ll+1))
+done < "$theBookDir/$1-list"
+
+str1+='
+
+\end{tabu}%
+}
+\end{table}
+
+\clearpage
+\thispagestyle{empty}
+\clearpage\mbox{}\clearpage
+
+'
+echo "$str1"
+}
+
 # $1 v for verbose
 function makeIT(){
-    cat "$theBookDir/header" \
-    | sed "s/insertNAMEhere/$(cat "$workingDir/files/name")/g" \
-    | sed "s/insertSYEARhere/$(SYear)/g" \
     >| "$theBookDir/product.tex"
-    data="$(cat "$workingDir/files/tableau"|awk '{$1=""; for(i=2;i<=NF;i++)printf("%s\n",$i);}'|cut -d= -f1|sort|uniq)"
+    if [[ $yearStart == '2019-09-09' ]] ; then
+        cat "$theBookDir/header" \
+        | sed "s/insertNAMEhere/$(cat "$workingDir/files/name")/g" \
+        | sed "s/insertSYEARhere/$(SYear)/g" \
+        >| "$theBookDir/product.tex"
+    fi
+    data="$(cat "$workingDir/files/tableau"|
+            awk '{$1=""; for(i=2;i<=NF;i++)printf("%s\n",$i);}'|
+            cut -d= -f1|sort|uniq)"
     IFS=$'\r\n' classes=($(echo "$data"))
     for (( i1 = 0 ; i1 < ${#classes[@]} ; i1 ++)) ; do
-        cat "$theBookDir/classeheader" |sed "s/insertClassHere/${classes[$i1]}/" >> "$theBookDir/product.tex"
+        if [[ $yearStart == '2019-09-09' ]] ; then
+            cat "$theBookDir/classeheader" |
+            sed "s/insertClassHere/${classes[$i1]}/" >> "$theBookDir/product.tex"
+            listLength=$(cat "$theBookDir/${classes[$i1]}-list"|wc -l )
+            if (( $listLength > 3 ))
+                then
+                    makeTable "${classes[$i1]}" >>  "$theBookDir/product.tex"
+                else
+                    printf '\033[1;33m warrning : class %s list file empty \033[1;0m\n' \
+                    "${classes[$i1]}"
+            fi
+        fi
         cat "$theBookDir/${classes[$i1]}.tex" >> "$theBookDir/product.tex"
     done
     echo "\\vfill" >> "$theBookDir/product.tex"
@@ -594,6 +673,12 @@ function printhelp () {
 }
 
 function removeFiles(){
+    read -r -p "confirm (yes/NO) : " ans
+    if [[ "$ans" != "yes" ]] ; then
+        echo nothing was deleted
+        exit
+    fi
+    echo deleting files
     rm  "$LOGFILE"  2>/dev/null
     rm  "$theBookDir/product.pdf"  2>/dev/null
     cd  "$theBookDir"
@@ -611,7 +696,7 @@ case "$1" in
       print|p|P)    makeIT $2 ;;
      status|s|S)    exit;;       #savePeriods "status" ;;
        open|o|O)    openIT ;;
-       view|v|V)    okular "$theBookDir/product.pdf" >/dev/null 2>&1 & ;;
+       view|v|V)    evince "$theBookDir/product.pdf" >/dev/null 2>&1 & ;;
        help|h|H)    printhelp ;;
     unsaved|u|U)    getUnsaved "$2" "$3" ;;
      backup|b|B)    backUP ;;
